@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      .thumb {
+        height: 150px;
+        border: 1px solid #000;
+        margin: 10px 5px 0 0;
+      }
+      #wait {
+        background-color: violet;
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+      }
+    </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <title>RPT</title>
+  </head>
+
+  <body>
+    <div id="wait" style="display: none"></div>
+    <!-- <input type="file" id="files" name="files[]" multiple />
+    <output id="list"></output> -->
+
+    <div class="custom-file" id="browseFile">
+        <input type="file" class="custom-file-input" id="customFile" name="files[]" multiple>
+        <label class="custom-file-label" for="customFile">Choose file</label>
+    </div>
+    <output id="list"></output>
+  </body>
+</html>
+
+<script>
+  function handleFileSelect(evt) {
+    const files = evt.target.files; // FileList object
+    Array.from(files).map(file => setPicture(file));
+    document.getElementById("browseFile").style.display = "none";
+  }
+
+  function setPicture(file) {
+    if (file.type.match("image.*")) {
+      let reader = new FileReader();
+
+      // Closure to capture the file information.
+      reader.onload = (theFile => {
+        return function(e) {
+          let img = document.createElement("img");
+          img.className = "thumb";
+          img.src = e.target.result;
+          img.title = escape(theFile.name);
+
+          let span = document.createElement("span");
+          span.addEventListener("click", handleDoSearch, false);
+          span.appendChild(img);
+
+          document.getElementById("list").insertBefore(span, null);
+        };
+      })(file);
+
+      // Read in the image file as a data URL.
+      reader.readAsDataURL(file);
+    }
+  }
+
+  function handleDoSearch(e) {
+    let path = e.target.src;
+    $.ajax({
+      url: window.location.href + "search",
+      type: "POST",
+      data: { path: path },
+      beforeSend: function() {
+        document.getElementById("wait").style.display = "inline-block";
+      },
+      success: function(searchURL) {
+        window.open(searchURL);
+        document.getElementById("wait").style.display = "none";
+      }
+    });
+  }
+
+  document
+    .getElementById("customFile")
+    .addEventListener("change", handleFileSelect, false);
+</script>
